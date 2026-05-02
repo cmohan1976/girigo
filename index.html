@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GIRIGO — 기리고</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Noto+Serif+KR:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --red: #b50000;
+  --blood: #7a0000;
+  --gold: #c8a84b;
+}
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  background:#000;
+  cursor:crosshair;
+}
+
+/* scanlines */
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 4px);
+  pointer-events:none; z-index:9999;
+}
+
+/* SCREENS */
+.screen {
+  position:fixed; inset:0;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+}
+.screen.active { display:flex; }
+
+/* ═══════════════ LANDING ═══════════════ */
+#landing { justify-content:flex-end; }
+
+#bg-video {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; z-index:0;
+}
+
+#landing::before {
+  content:'';
+  position:absolute; bottom:0; left:0; right:0; height:50%;
+  background:linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.6) 55%, transparent 100%);
+  z-index:1; pointer-events:none;
+}
+#landing::after {
+  content:'';
+  position:absolute; inset:0;
+  background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+  z-index:1; pointer-events:none;
+}
+
+.landing-bottom {
+  position:relative; z-index:2;
+  width:100%;
+  display:flex; flex-direction:column; align-items:center;
+  padding-bottom:clamp(44px,9vh,88px);
+  gap:0;
+}
+
+.app-tag {
+  font-family:'Share Tech Mono', monospace;
+  font-size:11px; letter-spacing:0.55em;
+  color:rgba(200,168,75,0.65);
+  margin-bottom:16px; text-transform:uppercase;
+}
+
+/* BIG SCARY BUTTON */
+.record-wish-btn {
+  font-family:'Creepster', cursive;
+  font-size:clamp(30px,8vw,46px);
+  letter-spacing:0.06em;
+  color:#fff;
+  background:transparent; border:none;
+  cursor:pointer; padding:12px 28px;
+  position:relative;
+  text-shadow:
+    0 0 8px rgba(181,0,0,1),
+    0 0 24px rgba(181,0,0,0.7),
+    0 0 50px rgba(181,0,0,0.35),
+    2px 3px 0 rgba(0,0,0,0.9);
+  transition:transform 0.15s;
+  -webkit-tap-highlight-color:transparent;
+  animation:btn-breathe 3s ease-in-out infinite;
+}
+@keyframes btn-breathe {
+  0%,100%{text-shadow:0 0 8px rgba(181,0,0,1),0 0 24px rgba(181,0,0,0.6),0 0 50px rgba(181,0,0,0.25);}
+  50%{text-shadow:0 0 16px rgba(181,0,0,1),0 0 45px rgba(181,0,0,0.9),0 0 90px rgba(181,0,0,0.45),0 0 130px rgba(181,0,0,0.15);}
+}
+.record-wish-btn:hover {
+  text-shadow:0 0 20px rgba(181,0,0,1),0 0 55px rgba(181,0,0,1),0 0 100px rgba(181,0,0,0.5);
+}
+.record-wish-btn:active { transform:scale(0.95); }
+
+/* drip effect under button */
+.drip-row {
+  display:flex; align-items:flex-start;
+  justify-content:center; gap:6px;
+  height:20px; margin-top:-2px;
+}
+.drip-row span {
+  width:2px;
+  background:linear-gradient(to bottom, rgba(181,0,0,0.9), transparent);
+  animation:drip-grow 3s ease-in-out infinite;
+  transform-origin:top;
+}
+.drip-row span:nth-child(1){height:8px;animation-delay:0s;}
+.drip-row span:nth-child(2){height:15px;animation-delay:0.45s;}
+.drip-row span:nth-child(3){height:6px;animation-delay:0.9s;}
+.drip-row span:nth-child(4){height:12px;animation-delay:0.25s;}
+.drip-row span:nth-child(5){height:9px;animation-delay:0.65s;}
+@keyframes drip-grow{0%,100%{opacity:0.4;transform:scaleY(1);}50%{opacity:1;transform:scaleY(1.5);}}
+
+.wish-hint {
+  margin-top:18px;
+  font-family:'Noto Serif KR', serif;
+  font-size:11px; color:rgba(255,255,255,0.2);
+  letter-spacing:0.35em; font-style:italic;
+}
+
+/* ═══════════════ RECORD SCREEN ═══════════════ */
+#record-screen {
+  background:#000; justify-content:space-between; overflow:hidden;
+}
+.cam-wrap { position:absolute; inset:0; z-index:0; }
+#cam-vid {
+  width:100%; height:100%; object-fit:cover;
+  transform:scaleX(-1); opacity:0.75;
+}
+.cam-vig {
+  position:absolute; inset:0;
+  background:radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.75) 100%);
+  pointer-events:none;
+}
+.cam-bot-grad {
+  position:absolute; bottom:0; left:0; right:0; height:52%;
+  background:linear-gradient(to top, rgba(0,0,0,0.97), transparent);
+  pointer-events:none;
+}
+.cam-top-grad {
+  position:absolute; top:0; left:0; right:0; height:30%;
+  background:linear-gradient(to bottom, rgba(0,0,0,0.82), transparent);
+  pointer-events:none;
+}
+.corner{position:absolute;width:30px;height:30px;z-index:3;}
+.c-tl{top:72px;left:20px;border-top:2px solid rgba(181,0,0,0.65);border-left:2px solid rgba(181,0,0,0.65);}
+.c-tr{top:72px;right:20px;border-top:2px solid rgba(181,0,0,0.65);border-right:2px solid rgba(181,0,0,0.65);}
+.c-bl{bottom:198px;left:20px;border-bottom:2px solid rgba(181,0,0,0.65);border-left:2px solid rgba(181,0,0,0.65);}
+.c-br{bottom:198px;right:20px;border-bottom:2px solid rgba(181,0,0,0.65);border-right:2px solid rgba(181,0,0,0.65);}
+
+.rec-top{position:relative;z-index:5;width:100%;padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between;}
+.rec-name{font-family:'Creepster',cursive;font-size:24px;letter-spacing:0.15em;color:#fff;text-shadow:0 0 14px rgba(181,0,0,0.9);}
+.rec-badge{display:flex;align-items:center;gap:7px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:0.25em;color:#b50000;opacity:0;transition:opacity 0.3s;}
+.rec-badge.on{opacity:1;}
+.rec-dot{width:7px;height:7px;background:#b50000;border-radius:50%;animation:blink 1s steps(1) infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.rec-clk{position:absolute;top:68px;left:50%;transform:translateX(-50%);z-index:5;font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:0.3em;color:rgba(255,255,255,0.5);display:none;}
+.rec-clk.on{display:block;}
+
+.cam-wish-box{position:absolute;bottom:202px;left:0;right:0;z-index:5;text-align:center;padding:0 30px;pointer-events:none;}
+.cam-wish-txt{font-family:'Noto Serif KR',serif;font-size:clamp(16px,5vw,23px);color:#fff;text-shadow:0 2px 18px rgba(0,0,0,1),0 0 28px rgba(181,0,0,0.5);line-height:1.65;opacity:0;transition:opacity 0.5s;}
+.cam-wish-txt.on{opacity:1;}
+
+.no-cam{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#252525;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.25em;}
+.no-cam-ico{font-size:36px;opacity:0.18;}
+
+.rec-btm{position:relative;z-index:5;width:100%;padding:0 22px clamp(26px,5vh,50px);display:flex;flex-direction:column;align-items:center;gap:18px;}
+.wish-field-wrap{width:100%;max-width:360px;display:flex;flex-direction:column;gap:7px;align-items:center;}
+.wish-field-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.5em;color:rgba(200,168,75,0.6);}
+.wish-field{width:100%;background:rgba(0,0,0,0.5);border:none;border-bottom:1px solid rgba(181,0,0,0.45);color:#fff;font-family:'Noto Serif KR',serif;font-size:17px;padding:10px 14px;text-align:center;outline:none;caret-color:#b50000;transition:border-color 0.3s,background 0.3s;}
+.wish-field::placeholder{color:rgba(255,255,255,0.18);font-style:italic;}
+.wish-field:focus{background:rgba(181,0,0,0.07);border-bottom-color:#b50000;}
+
+.rec-row{display:flex;align-items:center;justify-content:center;gap:36px;width:100%;}
+.side-btn{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;-webkit-tap-highlight-color:transparent;}
+.side-btn:hover{background:rgba(255,255,255,0.14);}
+
+/* THE ROUND RECORD BUTTON */
+.main-rec-btn{width:84px;height:84px;border-radius:50%;background:#fff;border:3px solid #fff;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 5px rgba(255,255,255,0.1),0 0 26px rgba(255,255,255,0.12);transition:all 0.2s;-webkit-tap-highlight-color:transparent;flex-shrink:0;}
+.main-rec-btn:active{transform:scale(0.93);}
+.main-rec-btn.recording{background:#b50000;border-color:#b50000;box-shadow:0 0 0 5px rgba(181,0,0,0.2),0 0 40px rgba(181,0,0,0.7);animation:recpulse 1.4s ease-in-out infinite;}
+@keyframes recpulse{0%,100%{box-shadow:0 0 0 5px rgba(181,0,0,0.18),0 0 28px rgba(181,0,0,0.5);}50%{box-shadow:0 0 0 11px rgba(181,0,0,0.08),0 0 55px rgba(181,0,0,0.95);}}
+.main-rec-btn img{width:52px;height:52px;image-rendering:pixelated;pointer-events:none;transition:filter 0.2s;}
+.main-rec-btn.recording img{filter:invert(1);}
+.rec-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.3em;color:rgba(255,255,255,0.25);text-align:center;text-transform:uppercase;}
+
+/* ═══════════════ PROCESSING ═══════════════ */
+#processing-screen{background:#000;align-items:center;justify-content:center;flex-direction:column;}
+.proc-ico{width:68px;height:68px;image-rendering:pixelated;animation:procspin 2s linear infinite;filter:drop-shadow(0 0 16px rgba(181,0,0,0.9));margin-bottom:26px;}
+@keyframes procspin{0%{transform:rotate(0deg);filter:drop-shadow(0 0 12px rgba(181,0,0,0.6));}50%{filter:drop-shadow(0 0 30px rgba(181,0,0,1));}100%{transform:rotate(360deg);filter:drop-shadow(0 0 12px rgba(181,0,0,0.6));}}
+.proc-title{font-family:'Creepster',cursive;font-size:26px;letter-spacing:0.3em;color:#fff;text-shadow:0 0 18px rgba(181,0,0,0.8);margin-bottom:5px;}
+.proc-sub{font-family:'Noto Serif KR',serif;font-size:12px;color:#555;letter-spacing:0.25em;font-style:italic;margin-bottom:34px;}
+.proc-bar{width:220px;height:2px;background:#111;}
+.proc-fill{height:100%;background:#b50000;width:0%;box-shadow:0 0 8px rgba(181,0,0,0.9);transition:width 0.07s linear;}
+.proc-log{margin-top:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#2a2a2a;letter-spacing:0.2em;text-align:center;min-height:14px;}
+
+/* ═══════════════ RESULT ═══════════════ */
+#result-screen{background:#000;overflow-y:auto;justify-content:flex-start;}
+.res-hdr{width:100%;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #0e0e0e;flex-shrink:0;position:sticky;top:0;background:#000;z-index:10;}
+.res-title{font-family:'Creepster',cursive;font-size:19px;letter-spacing:0.3em;color:#fff;text-shadow:0 0 12px rgba(181,0,0,0.7);}
+.res-back{background:none;border:none;color:#444;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.2em;cursor:pointer;transition:color 0.2s;}
+.res-back:hover{color:#fff;}
+.preview-wrap{display:flex;justify-content:center;padding:14px 16px 0;flex-shrink:0;}
+#preview-canvas{width:auto;max-width:300px;height:auto;max-height:52vh;aspect-ratio:9/16;display:block;background:#000;}
+.filter-sec{width:100%;max-width:380px;align-self:center;padding:14px 16px 0;flex-shrink:0;}
+.filter-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.45em;color:rgba(200,168,75,0.55);display:block;margin-bottom:9px;}
+.ftabs{display:flex;overflow-x:auto;scrollbar-width:none;}
+.ftabs::-webkit-scrollbar{display:none;}
+.ftab{flex-shrink:0;padding:8px 13px;background:none;border:1px solid #1a1a1a;border-right:none;color:#444;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.2em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.ftab:last-child{border-right:1px solid #1a1a1a;}
+.ftab.active{background:#b50000;border-color:#b50000;color:#fff;}
+.ftab:hover:not(.active){color:#fff;border-color:#333;}
+.togs{width:100%;max-width:380px;align-self:center;padding:13px 16px 0;flex-shrink:0;display:flex;flex-direction:column;gap:11px;}
+.tog-row{display:flex;align-items:center;justify-content:space-between;}
+.tog-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.25em;color:#555;}
+.tog{width:42px;height:22px;background:#111;border-radius:11px;cursor:pointer;position:relative;border:1px solid #222;transition:background 0.3s;}
+.tog.on{background:#b50000;border-color:#b50000;}
+.tog::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left 0.3s;}
+.tog.on::after{left:22px;}
+.exp-wrap{width:100%;max-width:380px;align-self:center;padding:14px 16px 36px;display:flex;flex-direction:column;gap:9px;flex-shrink:0;}
+.exp-btn{padding:15px;border:none;cursor:pointer;font-family:'Creepster',cursive;font-size:16px;letter-spacing:0.3em;transition:all 0.25s;}
+.exp-primary{background:#fff;color:#000;}
+.exp-primary:hover{background:#b50000;color:#fff;}
+.exp-secondary{background:transparent;color:#444;border:1px solid #1a1a1a;font-size:13px;}
+.exp-secondary:hover{color:#fff;border-color:#444;}
+
+/* ═══════════════ WISHES ARCHIVE ═══════════════ */
+#wishes-screen{background:#000;justify-content:flex-start;overflow-y:auto;}
+.wl-hdr{width:100%;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #0e0e0e;position:sticky;top:0;background:#000;z-index:10;flex-shrink:0;}
+.wl-title{font-family:'Creepster',cursive;font-size:19px;letter-spacing:0.3em;text-shadow:0 0 12px rgba(181,0,0,0.6);}
+.wl-cnt{font-family:'Share Tech Mono',monospace;font-size:10px;color:#333;}
+.wish-entry{display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid #0a0a0a;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.wish-entry:hover{background:#080808;}
+.we-thumb{width:50px;height:88px;flex-shrink:0;background:#0d0d0d;border:1px solid #1a1a1a;overflow:hidden;}
+.we-thumb img{width:100%;height:100%;object-fit:cover;}
+.we-thumb-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.25;}
+.we-info{flex:1;}
+.we-text{font-family:'Noto Serif KR',serif;font-size:14px;color:#ddd;line-height:1.5;margin-bottom:6px;}
+.we-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;letter-spacing:0.15em;display:flex;flex-direction:column;gap:2px;}
+.we-filter{font-size:8px;color:#7a0000;letter-spacing:0.25em;text-transform:uppercase;margin-top:4px;}
+.we-status{font-family:'Noto Serif KR',serif;font-size:10px;color:#c8a84b;font-style:italic;margin-top:4px;}
+.wl-empty{padding:80px 30px;text-align:center;font-family:'Noto Serif KR',serif;font-size:14px;color:#222;line-height:2.2;font-style:italic;}
+
+/* ═══════════════ NAV ═══════════════ */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.96);border-top:1px solid #0f0f0f;display:none;z-index:200;}
+.nav.show{display:flex;}
+.nav-btn{flex:1;padding:13px 8px;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:0.25em;color:#333;cursor:pointer;transition:color 0.2s;text-transform:uppercase;}
+.nav-btn.on{color:#fff;}
+.nav-btn:hover{color:#777;}
+.nav-ico{font-size:17px;line-height:1;}
+
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-70px);background:#fff;color:#000;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:0.3em;padding:11px 22px;z-index:9998;transition:transform 0.4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;}
+.toast.up{transform:translateX(-50%) translateY(0);}
+.toast.red{background:#b50000;color:#fff;}
+
+/* hidden canvas */
+#px-c{display:none;}
+</style>
+</head>
+<body>
+
+<!-- ═══ LANDING: VIDEO BACKGROUND ═══ -->
+<div id="landing" class="screen active">
+  <video id="bg-video" autoplay muted loop playsinline preload="auto">
+    <source src="girigo_bg.mp4" type="video/mp4">
+  </video>
+
+  <div class="landing-bottom">
+    <div class="app-tag">기리고 &nbsp;·&nbsp; G I R I G O</div>
+    <button class="record-wish-btn" onclick="goRecord()">Record Your Wish</button>
+    <div class="drip-row">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="wish-hint">소원을 말하세요 — speak &amp; it shall be heard</div>
+  </div>
+</div>
+
+<!-- ═══ RECORD SCREEN ═══ -->
+<div id="record-screen" class="screen">
+  <div class="cam-wrap">
+    <div class="no-cam" id="no-cam">
+      <div class="no-cam-ico">📷</div>
+      <span>ALLOW CAMERA TO BEGIN</span>
+    </div>
+    <video id="cam-vid" autoplay muted playsinline></video>
+    <div class="cam-vig"></div>
+    <div class="cam-bot-grad"></div>
+    <div class="cam-top-grad"></div>
+  </div>
+
+  <div class="corner c-tl"></div>
+  <div class="corner c-tr"></div>
+  <div class="corner c-bl"></div>
+  <div class="corner c-br"></div>
+
+  <div class="rec-top">
+    <span class="rec-name">GIRIGO</span>
+    <div class="rec-badge" id="rec-badge">
+      <div class="rec-dot"></div><span>REC</span>
+    </div>
+  </div>
+
+  <div class="rec-clk" id="rec-clk">00:00</div>
+
+  <div class="cam-wish-box">
+    <div class="cam-wish-txt" id="cam-wish-txt"></div>
+  </div>
+
+  <div class="rec-btm">
+    <div class="wish-field-wrap">
+      <span class="wish-field-lbl">ENTER YOUR WISH — 소원을 입력하세요</span>
+      <input type="text" class="wish-field" id="wish-field"
+        placeholder="I wish…" maxlength="80" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="rec-row">
+      <button class="side-btn" onclick="flipCam()">↔</button>
+      <button class="main-rec-btn" id="main-rec-btn" onclick="toggleRec()">
+        <img id="rec-icon" src="" alt="">
+      </button>
+      <button class="side-btn" onclick="goWishes()">☰</button>
+    </div>
+    <div class="rec-lbl" id="rec-lbl">TAP TO RECORD YOUR WISH</div>
+  </div>
+</div>
+
+<!-- ═══ PROCESSING ═══ -->
+<div id="processing-screen" class="screen">
+  <img class="proc-ico" id="proc-ico" src="" alt="">
+  <div class="proc-title">GIRIGO</div>
+  <div class="proc-sub">소원을 봉인합니다 — sealing your wish…</div>
+  <div class="proc-bar"><div class="proc-fill" id="proc-fill"></div></div>
+  <div class="proc-log" id="proc-log">Binding wish to the ritual…</div>
+</div>
+
+<!-- ═══ RESULT / EXPORT ═══ -->
+<div id="result-screen" class="screen">
+  <div class="res-hdr">
+    <button class="res-back" onclick="goRecord()">← RECORD</button>
+    <div class="res-title">YOUR WISH</div>
+    <button class="res-back" onclick="goWishes()">ARCHIVE →</button>
+  </div>
+
+  <div class="preview-wrap">
+    <canvas id="preview-canvas" width="405" height="720"></canvas>
+  </div>
+
+  <div class="filter-sec">
+    <span class="filter-lbl">CHOOSE FILTER FOR REEL — 필터 선택</span>
+    <div class="ftabs">
+      <button class="ftab active" data-f="ritual" onclick="setFilter('ritual',this)">RITUAL</button>
+      <button class="ftab" data-f="blood"  onclick="setFilter('blood',this)">BLOOD</button>
+      <button class="ftab" data-f="ghost"  onclick="setFilter('ghost',this)">GHOST</button>
+      <button class="ftab" data-f="void"   onclick="setFilter('void',this)">VOID</button>
+      <button class="ftab" data-f="glitch" onclick="setFilter('glitch',this)">GLITCH</button>
+      <button class="ftab" data-f="spirit" onclick="setFilter('spirit',this)">SPIRIT</button>
+    </div>
+  </div>
+
+  <div class="togs">
+    <div class="tog-row"><span class="tog-lbl">SHOW WISH TEXT</span><div class="tog on" id="tog-txt" onclick="togTxt()"></div></div>
+    <div class="tog-row"><span class="tog-lbl">GIRIGO WATERMARK</span><div class="tog on" id="tog-wm" onclick="togWm()"></div></div>
+    <div class="tog-row"><span class="tog-lbl">PIXEL LOGO OVERLAY</span><div class="tog" id="tog-logo" onclick="togLogo()"></div></div>
+  </div>
+
+  <div class="exp-wrap">
+    <button class="exp-btn exp-primary" onclick="exportReel()">⬇ SAVE AS REEL</button>
+    <button class="exp-btn exp-secondary" onclick="exportSnap()">⬇ SAVE SNAPSHOT (PNG)</button>
+  </div>
+</div>
+
+<!-- ═══ WISHES ARCHIVE ═══ -->
+<div id="wishes-screen" class="screen">
+  <div class="wl-hdr">
+    <button class="res-back" onclick="goRecord()">← BACK</button>
+    <div class="wl-title">WISH ARCHIVE</div>
+    <span class="wl-cnt" id="wl-cnt">0</span>
+  </div>
+  <div id="wishes-lis
